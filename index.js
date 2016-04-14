@@ -1,15 +1,17 @@
 module.exports = (function (global) {
     "use strict";
 
-    var _edgeRgx = /(edge)\/(.*)$/i,
-        _ieRgx = /(Trident)\/[\d|\.]+;[\s|\w|\d|\.|;]*rv:([\d|\.]+)\)/i,
-        _ieCompatRgx = /(MSIE)\s([\d|\.]+);/i,
-        _safariRgx = /version\/([\d|\.]+)\s(?:Mobile\/([\d|\w]+))?\s?(Safari)\/\d/i,
-        _chromeRgx = /(chrome)\/([\d|\.]+)(?:\s(mobile))?/i,
-        _chromeIosRgx = /(CriOS)\/([\d|\.]+)(?:\s(mobile))?/i,
-        _ffRgx = /(?:(android))?;.*(firefox)\/([\d|\.]+)/i,
+  var _edgeRgx = /(edge)\/(.*)$/i,
+    _ieRgx = /(Trident)\/[\d|\.]+;[\s|\w|\d|\.|;]*rv:([\d|\.]+)\)/i,
+    _ieCompatRgx = /(MSIE)\s([\d|\.]+);/i,
+    _safariRgx = /version\/([\d|\.]+)\s(?:Mobile\/([\d|\w]+))?\s?(Safari)\/\d/i,
+    _chromeRgx = /(chrome)\/([\d|\.]+)(?:\s(mobile))?/i,
+    _chromeIosRgx = /(CriOS)\/([\d|\.]+)(?:\s(mobile))?/i,
+    _ffRgx = /(?:(android))?;.*(firefox)\/([\d|\.]+)/i,
+    _opRgx = /(opr)\/([\d|\.]+)/i,
+    _opMiniRgx = /(opera mini|opera mobi)\/.*(presto)\/[\d|\.]+\sVersion\/([\d|\.]+)/i,
 
-        _retrievedDetails = null;
+    _retrievedDetails = null;
 
     function _testUserAgent(rgx, browser, indxs, ua) {
         var res = rgx.exec(ua);
@@ -26,19 +28,20 @@ module.exports = (function (global) {
             Promise.reject(ua));
     }
 
-    var _testSafari = _testUserAgent.bind(null, _safariRgx, "Safari", [3, 1, 2]),
-        _testEdge = _testUserAgent.bind(null, _edgeRgx, "Edge", null),
-        _testChrome = _testUserAgent.bind(null, _chromeRgx, "Chrome", null),
-        _testChromeIos = _testUserAgent.bind(null, _chromeIosRgx, "Chrome for iOS", null),
-        _testFirefox = _testUserAgent.bind(null, _ffRgx, "Firefox", [2, 3, 1]);
-
     function _testIe(ua) {
         return _testUserAgent(_ieRgx, "Internet Explorer", null, ua)
             .catch(_testUserAgent.bind(null, _ieCompatRgx, "Internet Explorer", null));
     }
 
-    function getUaDetails() {
+    var _testOpera = _testUserAgent.bind(null, _opRgx, "Opera", null),
+        _testOperaMini = _testUserAgent.bind(null, _opMiniRgx, "Opera Mini", [3, 1, 2]),
+        _testSafari = _testUserAgent.bind(null, _safariRgx, "Safari", [3, 1, 2]),
+        _testEdge = _testUserAgent.bind(null, _edgeRgx, "Edge", null),
+        _testChrome = _testUserAgent.bind(null, _chromeRgx, "Chrome", null),
+        _testChromeIos = _testUserAgent.bind(null, _chromeIosRgx, "Chrome for iOS", null),
+        _testFirefox = _testUserAgent.bind(null, _ffRgx, "Firefox", [2, 3, 1]);
 
+    function getUaDetails() {
         return new Promise(function (resolve, reject) {
             if (_retrievedDetails) {
                 resolve(_retrievedDetails);
@@ -49,6 +52,8 @@ module.exports = (function (global) {
         })
             .catch(_testEdge)
             .catch(_testIe)
+            .catch(_testOpera)
+            .catch(_testOperaMini)
             .catch(_testChrome)
             .catch(_testChromeIos)
             .catch(_testFirefox)
@@ -56,7 +61,7 @@ module.exports = (function (global) {
             .then(function (details) {
                 _retrievedDetails = details;
                 return details;
-            })
+            });
     }
 
     return {
